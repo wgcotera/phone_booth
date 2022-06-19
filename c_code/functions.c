@@ -76,10 +76,10 @@ float rand_cost()
 
 void call_simulator(float total, float cost) 
 {
-    float sub = total - cost;
+    float sub = total;
     for(int i = 1; sub > 0.05 ; i++) {
         printf("%d. Llamada en curso... Presiona C para colgar\n", i);
-        sub = total - (i+1) * cost;
+        sub = total - i * cost;
         fflush(stdout);
         sleep(1);
     }

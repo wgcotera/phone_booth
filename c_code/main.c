@@ -12,10 +12,16 @@ int main(void)
 
     // COSTO DE LLAMADA ALEATORIO ENTRE 0.10 Y 0.40
     float cost = rand_cost();
-    printf("\nCosto de la llamada: $%.2f.\n\n", cost);    
+    printf("\nCosto por minuto: $%.2f.\n\n", cost);    
 
     // SIMULAR LLAMADA
     call_simulator(total, cost);
+
+    // COSTO Y DURACION DE LA LLAMADA
+    int duration = total/cost;
+    float fcost = cost*duration;
+    printf("\nDuracion de la llamada: %d minutos.\n\n", duration);  
+    printf("\nCosto de la llamada: $%.2f.\n\n", fcost);  
 
 // PRUEBAS
     // char c3[15];
