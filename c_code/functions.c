@@ -57,15 +57,30 @@ int validate_number(char *number)
 
 void get_number(char *number)
 {
+    printf("Ingrese el numero a llamar: ");
+    scanf("%s", number);
+
     while (validate_number(number) == 0)
     {
-        printf("Ingrese el numero a llamar: ");
+        printf("\nNumero ingresado equivocado...\nIngrese el numero a llamar: ");
         scanf("%s", number);
     }
 }
 
 float rand_cost()
 {
+    srand(time(NULL));
     int r = rand() % 31;
     return (r+10.0)/100;
+}
+
+void call_simulator(float total, float cost) 
+{
+    float sub = total - cost;
+    for(int i = 1; sub > 0.05 ; i++) {
+        printf("%d. Llamada en curso... Presiona C para colgar\n", i);
+        sub = total - (i+1) * cost;
+        fflush(stdout);
+        sleep(1);
+    }
 }
