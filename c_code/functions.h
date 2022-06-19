@@ -10,3 +10,5 @@ int is_digit(char *number);
 int validate_number(char *number);
 
 void get_number(char *number);
+
+float rand_cost();

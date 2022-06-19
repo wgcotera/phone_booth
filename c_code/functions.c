@@ -63,3 +63,9 @@ void get_number(char *number)
         scanf("%s", number);
     }
 }
+
+float rand_cost()
+{
+    int r = rand() % 31;
+    return (r+10.0)/100;
+}
