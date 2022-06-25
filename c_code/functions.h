@@ -3,6 +3,8 @@
 #include <unistd.h>
 #include <time.h>
 
+int valid_coin(float array[], int length, float value);
+
 float get_money();
 
 int string_length(char *string);
