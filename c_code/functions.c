@@ -95,7 +95,7 @@ float rand_cost()
     return (r+10.0)/100;
 }
 
-void call_simulator(float total, float cost) 
+void call_simulator2(float total, float cost) 
 {
     float sub = total - cost;
     for(int i = 1; sub > 0 ; i++) {
@@ -104,4 +104,22 @@ void call_simulator(float total, float cost)
         fflush(stdout);
         sleep(1);
     }
+}
+
+int call_simulator(float total, float cost)
+{
+    float sub = total - cost;
+    int boole = 1;
+    int i;
+
+    printf("Iniciar Llamada?    [ SI -> (1) ]    [ NO -> (0) ] : ");
+    scanf("%d", &boole);
+    printf("\n");
+
+    for(i = 1; sub > 0 && boole == 1 ; i++) {
+        printf("%d. Llamada en curso... [ CONTINUAR -> (1) ] o [ TERMINAR -> (0) ]: ", i);
+        scanf("%d", &boole);
+        sub -= cost;
+    }
+    return --i;
 }

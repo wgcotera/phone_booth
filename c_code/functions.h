@@ -17,4 +17,6 @@ void get_number(char *number);
 
 float rand_cost();
 
-void call_simulator(float total, float cost);
+int call_simulator(float total, float cost);
+
+void call_simulator1(float total, float cost);
