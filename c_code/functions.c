@@ -95,7 +95,7 @@ float rand_cost()
     return (r+10.0)/100;
 }
 
-void call_simulator2(float total, float cost) 
+void call_simulator1(float total, float cost) 
 {
     float sub = total - cost;
     for(int i = 1; sub > 0 ; i++) {

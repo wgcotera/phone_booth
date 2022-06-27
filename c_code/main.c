@@ -17,8 +17,7 @@ int main(void)
     printf("\nCosto por minuto: $%.2f.\n\n", cost);    
 
     // SIMULAR LLAMADA
-    // int boole;
-    // call_simulator(total, cost);
+    // call_simulator1(total, cost);
 
     // COSTO Y DURACION DE LA LLAMADA
     // int duration = total/cost;
