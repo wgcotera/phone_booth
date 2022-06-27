@@ -1,7 +1,6 @@
 .data
 
-mInicial:       .asciiz         "******************************\n*** BIENVENIDO A LA CABINA TELEFONICA **\n*******************************\n"   
-
+mInicial:       .asciiz         "*****************************************\n*** BIENVENIDO A LA CABINA TELEFONICA ***\n*****************************************\n"   
 fmonInp:        .asciiz         "Ingrese Monedas: "
 fmonErr:        .asciiz         "*-- MONEDA INCORRECTA --*\n"
 
@@ -20,6 +19,7 @@ cambio:         .asciiz         "Cambio: $ "
 
 zerof:          .float          0.0
 mione:          .float          -1.0
+randh:          .float          100.0
 val_coin:       .float          0.05, 0.10, 0.25, 0.50, 1.00
 
 val_num:        .byte           '1', '2', '3', '4', '5', '6', '7', '8', '9', '0'
@@ -28,11 +28,16 @@ empty:          .asciiz         " "
 
                 .text
 
+
+# ********************************************************** #
+# ********************** MAIN PROGRAM ********************** #
+# ********************************************************** #
 main:
 # ************ INIT ************* #
 
     lwc1            $f30, zerof                 # $f30 = 0
     lwc1            $f31, mione                 # $f31 = -1
+    lwc1            $f10, randh
     # Float accumulator for deposited money
     add.s           $f2, $f30, $f30             # f1 = 0
     # Condicionals
@@ -60,9 +65,16 @@ main:
     jal		        GET_MONEY				    # jump to GET_MONEY and save position to $ra
     
     jal		        GET_NUMBER				    # jump to GET_NUMBER and save position to $ra
+
+    jal		        COST				        # jump to COST and save position to $ra
     
 
+    j		        END_PROGRAM				    # jump to END_PROGRAM
+    
+    
+# ********************************************************** #
 # ************************ GET COINS *********************** #
+# ********************************************************** #
 
 GET_MONEY:
 
@@ -108,7 +120,9 @@ GET_MONEY_END:
     syscall
     jr		        $ra					        # jump to $ra    
     
+# ********************************************************** #
 # ********************* VALIDATE COINS ********************* #
+# ********************************************************** #
 
 VAL_COIN:
     li		        $t1, 0		                # $t1 = 0
@@ -131,7 +145,9 @@ VAL_COIN_V:
     li		        $v1, 1		                # $v1 = 1 valid coin
     jr		        $ra					        # jump to $ra   
 
+# ********************************************************** #
 # ******************* GET PHONE NUMBER ********************* #
+# ********************************************************** #
 
 GET_NUMBER:
     # Ask for phone number
@@ -151,7 +167,11 @@ GET_NUMBER:
     lw		        $ra, 0($sp)		            # 
     addi	        $sp, $sp, 4			        # $sp = $sp + 4
 
-    beq		        $v1, $s1, END_PROGRAM	    # if $v1 == $s1 then END_PROGRAM
+    beq		        $v1, $s0, GET_NUMBER_I	    # if $v1 == $s0 then GET_NUMBER_I
+    jr		        $ra					        # jump to $ra
+    
+    
+GET_NUMBER_I:  
     # Display  "*-- NUMERO INCORRECTO --*"
     li		        $v0, 4		                # $v0 = 4
     la		        $a0, fnumErr		        # 
@@ -159,8 +179,9 @@ GET_NUMBER:
     j		        GET_NUMBER				    # jump to GET_NUMBER
     
  
-
-# ******************** VALIDATE PHONE ********************* #
+# ********************************************************** #
+# ******************** VALIDATE PHONE ********************** #
+# ********************************************************** #
 
 VAL_PHONE:
     li		        $t0, -1		                # $t0 = 0   letter counter        
@@ -196,7 +217,9 @@ VAL_PHONE_I:
     li              $v1, 0                      # $v1 = 0 invalid coin
     jr              $ra                         # jump to $ra
 
+# ********************************************************** #
 # ******************** VALIDATE NUMBER ********************* #
+# ********************************************************** #
 
 VAL_NUMBER:
 
@@ -212,15 +235,38 @@ VAL_NUMBER_I:
     li              $v1, 0                      # $v1 = 0 invalid coin
     jr              $ra                         # jump to $ra
 
+# ********************************************************** #
+# ********************** RANDOM COST *********************** #
+# ********************************************************** #
 
-# ******************** TERMINAR PROGRAMA ******************** #
+COST:
+    # Random number between 10 and 40 in $f12
+    li		        $a1, 31		                # $a1 = 31   
+    li		        $v0, 42		                # $v0 = 42
+    syscall
+
+    addi	        $t5, $a0, 10			    # $t5 = $a1 + 10
+    mtc1            $t5, $f2
+    cvt.s.w         $f2, $f2
+    div.s           $f12, $f2, $f10             # $f12 = $f2 / $f10
+
+
+    # Display "Costo por minuto: $ "
+    li		        $v0, 4		                # $v0 = 4
+    la		        $a0, costPmin		        # 
+    syscall
+
+    li		        $v0, 2		                # $v0 = 2
+    syscall
+
+    jr		        $ra					        # jump to $ra
+
+# ********************************************************** #
+# ******************* TERMINAR PROGRAMA ******************** #
+# ********************************************************** #
 
 END_PROGRAM: 
     li		        $v0, 17		                # $v0 = 17
     li		        $a0, 0		                # $a0 = 0
     syscall
 
-    # Ask for phone number
-    li		        $v0, 4		                # $v0 = 4
-    la		        $a0, costPmin		        # 
-    syscall
