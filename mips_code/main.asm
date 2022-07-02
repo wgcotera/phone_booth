@@ -7,18 +7,21 @@ fmonInp:        .asciiz         "Ingrese Monedas: "
 fmonErr:        .asciiz         "*-- MONEDA INCORRECTA --*\n"
 
 fnumInp:        .asciiz         "\nIngrese el numero a llamar: \t\t"
-fnumErr:        .asciiz         "*-- NUMERO INCORRECTO --*\n"
+fnumErr:        .asciiz         "*-- NUMERO INCORRECTO --*"
 
 monTotal:       .asciiz         "\nTotal: \t\t\t\t\t$ "
 costPmin:       .asciiz         "\nCosto por minuto: \t\t\t$ "
 totalMin:       .asciiz         "\n\nMinutos disponibles para hablar: \t"
 
-fsimInit:       .asciiz         "Iniciar Llamada?    [ SI -> (1) ]    [ NO -> (0) ] : "
-fsimCall:       .asciiz         "Llamada en curso... [ CONTINUAR -> (1) ] o [ TERMINAR -> (0) ]: "
+fsimInit:       .asciiz         "Iniciar Llamada?    [ SI -> (1) ]    [ NO -> (0) ] : \t\t\t"
+fsimCall:       .asciiz         ". Llamada en curso... [ CONTINUAR -> (1) ] o [ TERMINAR -> (0) ]: \t"
 
-durCall:        .asciiz         "Duracion de la llamada: "
-costTotal:      .asciiz         "Costo de la llamada: $ "
+durCall:        .asciiz         "\n\nDuracion de la llamada: \t\t"
+minutes:        .asciiz         " minutos."
+costTotal:      .asciiz         "\n\nCosto de la llamada: \t\t\t$ "
 cambio:         .asciiz         "Cambio: $ "
+enter:          .asciiz         "\n"
+enter2:         .asciiz         "\n\n"
 
 zerof:          .float          0.0
 mione:          .float          -1.0
@@ -43,7 +46,7 @@ main:
     # FLOAT 100
     lwc1            $f10, randh
     # FLOAT ACCUMULATOR FOR DEPOSITED MONEY
-    add.s           $f2, $f30, $f30             # f1 = 0
+    add.s           $f2, $f30, $f30             # f2 = 0.0
     # FLAGS
     li		        $s0, 0		                # $s0 = 0 FALSE
     li		        $s1, 1		                # $s1 = 1 TRUE
@@ -61,6 +64,9 @@ main:
     # MAXIMUM NUMBER OF MINUTES     -->     $s7
    
     # RANDOM COST PER MINUTE        -->     $f29
+
+    # CALL COST
+    add.s           $f27, $f30, $f30            # $f27 = 0.0
     
 
 
@@ -72,7 +78,12 @@ main:
     la		        $a0, msSalir		        # 
     syscall 
 
-    jal		        GET_MONEY				    # jump to GET_MONEY and save position to $ra    
+    jal		        GET_MONEY				    # jump to GET_MONEY and save position to $ra   
+
+    li		        $v0, 4		                # $v0 = 4
+    la		        $a0, enter		            # 
+    syscall  
+
     jal		        GET_NUMBER				    # jump to GET_NUMBER and save position to $ra
     jal		        COST				        # jump to COST and save position to $ra
 
@@ -91,9 +102,34 @@ main:
     move 	        $a0, $s7		            # $a0 = $s7    
     syscall  
 
-    jal		        CALL_SIMULATION				# jump to CALL_SIMULATION and save position to $ra
+    li		        $v0, 4		                # $v0 = 4
+    la		        $a0, enter2		            # 
+    syscall  
     
+    jal		        CALL_SIM				    # jump to CALL_SIMULATION and save position to $ra
 
+    # DISPLAY "Duracion de la llamada: "
+    li		        $v0, 4		                # $v0 = 4
+    la		        $a0, durCall		        # 
+    syscall
+
+    li		        $v0, 1		                # $v0 = 1
+    move 	        $a0, $v1		            # $a0 = $v1
+    syscall
+
+    li		        $v0, 4		                # $v0 = 4
+    la		        $a0, minutes		        # 
+    syscall
+    
+    # DISPLAY "Costo de la llamada: $ "
+    li		        $v0, 4		                # $v0 = 4
+    la		        $a0, costTotal		        # 
+    syscall
+
+    mov.s 	        $f12, $f27                  # $f12 = $f27
+    li		        $v0, 2                      # $v0 = 2
+    syscall
+    
 
     j		        END_PROGRAM				    # jump to END_PROGRAM
     
@@ -142,7 +178,7 @@ GET_MONEY_END:
     la		        $a0, monTotal               # 
     syscall   
 
-    mov.s 	        $f12, $f2                   # $f12 = $f1
+    mov.s 	        $f12, $f2                   # $f12 = $f2
     li		        $v0, 2                      # $v0 = 2
     syscall
     jr		        $ra					        # jump to $ra    
@@ -295,10 +331,45 @@ COST:
 # ******************** CALL SIMULATION ********************* #
 # ********************************************************** #
 
-CALL_SIMULATION:
+CALL_SIM:
 
+    # DISPLAY "Iniciar Llamada?    [ SI -> (1) ]    [ NO -> (0) ] : "
+    li		        $v0, 4		                # $v0 = 4
+    la		        $a0, fsimInit		        # 
+    syscall
 
+    # SEE IF THE USER WANTS TO START THE CALL
+    li		        $v0, 5		                # $v0 = 5
+    syscall
+    beq		        $v0, $s0, CALL_SIM_END	    # if $v0 == $s0 then CALL_SIM_END
+    
+    li              $t0, 0		                # $t0 = 0 counter
 
+CALL_SIM_LOOP:
+    add.s           $f27, $f27, $f29            # $f27 += COST PER MINUTE
+    addi	        $t0, $t0, 1			        # $t0 = $t0 + 1
+
+    # DISPLAY "[minute] Llamada en curso... [ CONTINUAR -> (1) ] o [ TERMINAR -> (0) ]: "
+    li		        $v0, 1		                # $v0 = 1
+    move 	        $a0, $t0		            # $a0 = $t1
+    syscall    
+    
+    li		        $v0, 4		                # $v0 = 4
+    la		        $a0, fsimCall		        # 
+    syscall
+
+    beq		        $t0, $s7, CALL_SIM_END	    # if $t0 == $s7 then CALL_SIM_END
+    # SEE IF THE USER WANTS TO CONTINUE THE CALL
+    li		        $v0, 5		                # $v0 = 5
+    syscall
+    beq		        $v0, $s0, CALL_SIM_END	    # if $v0 == $s0 then CALL_SIM_END
+        
+
+    j		        CALL_SIM_LOOP				# jump to CALL_SIM_LOOP
+    
+CALL_SIM_END:
+    move 	        $v1, $t0		            # $v1 = $t0
+    jr		        $ra					        # jump to $ra
 
 # ********************************************************** #
 # ******************* TERMINAR PROGRAMA ******************** #
