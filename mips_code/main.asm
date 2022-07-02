@@ -1,14 +1,17 @@
-.data
+                .data
 
-mInicial:       .asciiz         "*****************************************\n*** BIENVENIDO A LA CABINA TELEFONICA ***\n*****************************************\n"   
+mInicial:       .asciiz         "*******************************************\n**** BIENVENIDO A LA CABINA TELEFONICA ****\n*******************************************\n"   
+msSalir:        .asciiz         "\nIngrese [ -1 ] para dejar de añadir monedas\n\n"
+
 fmonInp:        .asciiz         "Ingrese Monedas: "
 fmonErr:        .asciiz         "*-- MONEDA INCORRECTA --*\n"
 
-fnumInp:        .asciiz         "\nIngrese el numero a llamar: "
+fnumInp:        .asciiz         "\nIngrese el numero a llamar: \t\t"
 fnumErr:        .asciiz         "*-- NUMERO INCORRECTO --*\n"
 
-monTotal:       .asciiz         "Total: $ "
-costPmin:       .asciiz         "Costo por minuto: $ "
+monTotal:       .asciiz         "\nTotal: \t\t\t\t\t$ "
+costPmin:       .asciiz         "\nCosto por minuto: \t\t\t$ "
+totalMin:       .asciiz         "\n\nMinutos disponibles para hablar: \t"
 
 fsimInit:       .asciiz         "Iniciar Llamada?    [ SI -> (1) ]    [ NO -> (0) ] : "
 fsimCall:       .asciiz         "Llamada en curso... [ CONTINUAR -> (1) ] o [ TERMINAR -> (0) ]: "
@@ -22,74 +25,99 @@ mione:          .float          -1.0
 randh:          .float          100.0
 val_coin:       .float          0.05, 0.10, 0.25, 0.50, 1.00
 
-val_num:        .byte           '1', '2', '3', '4', '5', '6', '7', '8', '9', '0'
 phone:          .space          15
-empty:          .asciiz         " "
+
+
 
                 .text
-
-
 # ********************************************************** #
 # ********************** MAIN PROGRAM ********************** #
 # ********************************************************** #
-main:
-# ************ INIT ************* #
 
+main:
+
+    # FLOAT ZERO
     lwc1            $f30, zerof                 # $f30 = 0
+    # FLOAT -1
     lwc1            $f31, mione                 # $f31 = -1
+    # FLOAT 100
     lwc1            $f10, randh
-    # Float accumulator for deposited money
+    # FLOAT ACCUMULATOR FOR DEPOSITED MONEY
     add.s           $f2, $f30, $f30             # f1 = 0
-    # Condicionals
+    # FLAGS
     li		        $s0, 0		                # $s0 = 0 FALSE
     li		        $s1, 1		                # $s1 = 1 TRUE
-    # Number of valid coins
+    # NUMBER OF VALID COINS
     li		        $s2, 5		                # $s0 = 5
-    # Address of valid coins array
+    # ADDRESS OF THE ARRAY WITH VALID COINS
     la		        $s3, val_coin		        #  
-    # Phone number max index
+    # MAXIMUM PHONE NUMBER INDEX
     li		        $s4, 9		                # $s4 = 15
-    # Address of valid numbers array
-    la		        $s5, val_num		        # 
-    # \n
+    # EQUIVALENT OF '\n' IN ASCII CODE
     li		        $s6, 10		                # $s6 = 10
-    # Initialize stack pointer
+    # INITIALIZE THE STACK POINTER
     li		        $sp, 0		                # $sp = 0
-        
+    
+    # MAXIMUM NUMBER OF MINUTES     -->     $s7
+   
+    # RANDOM COST PER MINUTE        -->     $f29
+    
 
-    # Display Welcome Message
+
+
+    # DISPLAY WELCOME MESSAGE
     li		        $v0, 4		                # $v0 = 4
     la		        $a0, mInicial		        # 
     syscall  
+    la		        $a0, msSalir		        # 
+    syscall 
 
-    jal		        GET_MONEY				    # jump to GET_MONEY and save position to $ra
-    
+    jal		        GET_MONEY				    # jump to GET_MONEY and save position to $ra    
     jal		        GET_NUMBER				    # jump to GET_NUMBER and save position to $ra
-
     jal		        COST				        # jump to COST and save position to $ra
+
+    # MAXIMUM NUMBER OF MINUTES
+
+    div.s           $f28, $f2, $f29             # TOTAL MONEY / RANDOM COST PER MINUTE
+    cvt.w.s         $f28, $f28
+    mfc1            $s7, $f28
+
+    # DISPLAY "Minutos disponibles para hablar: "
+    li		        $v0, 4		                # $v0 = 4
+    la		        $a0, totalMin		        # 
+    syscall  
+
+    li		        $v0, 1		                # $v0 = 1
+    move 	        $a0, $s7		            # $a0 = $s7    
+    syscall  
+
+    jal		        CALL_SIMULATION				# jump to CALL_SIMULATION and save position to $ra
     
+
 
     j		        END_PROGRAM				    # jump to END_PROGRAM
     
     
+
+
 # ********************************************************** #
 # ************************ GET COINS *********************** #
 # ********************************************************** #
 
 GET_MONEY:
 
-    # Display "Ingrese Monedas: "
+    # DISPLAY "Ingrese Monedas: "
     li		        $v0, 4		                # $v0 = 4
     la		        $a0, fmonInp		        # 
     syscall   
-    # Take float input from user
+    # TAKE FLOAT ENTERED BY THE USER
     li		        $v0, 6                      # $v0 = 6
     syscall 
-    # If input == -1 end coin input
+    # IF INPUT == -1 END COIN INPUT
     c.eq.s          $f0, $f31                   # if $f0 == $f31 
     bc1t            GET_MONEY_END
-    # Else Validate the coin
 
+    # ELSE -> VALIDATE COIN ENTERED
     addi	        $sp, $sp, -4			    # $sp = $sp + -4
     sw		        $ra, 0($sp)		            #     
     jal		        VAL_COIN				    # jump to VAL_COIN and save position to $ra
@@ -101,7 +129,7 @@ GET_MONEY:
     j               GET_MONEY                   # jump to GET_MONEY
 
 GET_MONEY_INV:
-    # Display "*-- MONEDA INCORRECTA --*"
+    # DISPLAY "*-- MONEDA INCORRECTA --*"
     li		        $v0, 4		                # $v0 = 4
     la		        $a0, fmonErr		        # 
     syscall
@@ -109,12 +137,11 @@ GET_MONEY_INV:
            
 GET_MONEY_END:
 
-    # Display "Total: $ "
+    # DISPLAY "Total: $ "
     li		        $v0, 4                      # $v0 = 4
     la		        $a0, monTotal               # 
     syscall   
 
-    # Display sum of coins
     mov.s 	        $f12, $f2                   # $f12 = $f1
     li		        $v0, 2                      # $v0 = 2
     syscall
@@ -145,17 +172,18 @@ VAL_COIN_V:
     li		        $v1, 1		                # $v1 = 1 valid coin
     jr		        $ra					        # jump to $ra   
 
+
 # ********************************************************** #
 # ******************* GET PHONE NUMBER ********************* #
 # ********************************************************** #
 
 GET_NUMBER:
-    # Ask for phone number
+    # DISPLAY "Ingrese el numero a llamar: "
     li		        $v0, 4		                # $v0 = 4
     la		        $a0, fnumInp		        # 
     syscall
 
-    # Getting user's input
+    # TAKE STRING ENTERED BY THE USER (PHONE NUMBER)
     li		        $v0, 8		                # $v0 = 8
     la		        $a0, phone		            # 
     li		        $a1, 15		                # $a1 = 15  size of the array
@@ -168,11 +196,10 @@ GET_NUMBER:
     addi	        $sp, $sp, 4			        # $sp = $sp + 4
 
     beq		        $v1, $s0, GET_NUMBER_I	    # if $v1 == $s0 then GET_NUMBER_I
-    jr		        $ra					        # jump to $ra
-    
+    jr		        $ra					        # jump to $ra    
     
 GET_NUMBER_I:  
-    # Display  "*-- NUMERO INCORRECTO --*"
+    # DISPLAY  "*-- NUMERO INCORRECTO --*"
     li		        $v0, 4		                # $v0 = 4
     la		        $a0, fnumErr		        # 
     syscall
@@ -202,10 +229,10 @@ VAL_PHONE_LOOP:
     lw		        $ra, 0($sp)		            # 
     addi	        $sp, $sp, 4			        # $sp = $sp + 4
 
-    # IF IT'S NOT A NUMBER --> VAL_PHONE_I
+    # IF IT'S NOT A NUMBER --> VAL_PHONE_I (INVALID NUMBER)
     beq		        $v1, $s0, VAL_PHONE_I	    # if $v0 == $s0 then VAL_PHONE_I
 
-    # ELSE IF IT'S THE 9TH CHARACTER --> CHECK IF THE NEXT ONE IS \n
+    # ELSE IF IT'S THE 9TH CHARACTER --> CHECK IF THE NEXT ONE IS '\n'
     bne		        $t0, $s4, VAL_PHONE_LOOP	# if $t0 != $s4 then VAL_PHONE_LOOP
     lb              $t3, 1($t2)                 #
     bne		        $t3, $s6, VAL_PHONE_I	    # if $a0 != $s6 then VAL_PHONE_I
@@ -240,26 +267,38 @@ VAL_NUMBER_I:
 # ********************************************************** #
 
 COST:
-    # Random number between 10 and 40 in $f12
+    # GENERATE RANDOM NUMBER BETWEEN 10 AND 40
     li		        $a1, 31		                # $a1 = 31   
     li		        $v0, 42		                # $v0 = 42
     syscall
 
-    addi	        $t5, $a0, 10			    # $t5 = $a1 + 10
-    mtc1            $t5, $f2
-    cvt.s.w         $f2, $f2
-    div.s           $f12, $f2, $f10             # $f12 = $f2 / $f10
+    addi	        $t5, $a0, 10			    # $t5 = $a0 + 10
+
+    # CONVERT THE NUMBER TO FLOATING POINT BETWEEN 0.10 AND 0.40
+    mtc1            $t5, $f4
+    cvt.s.w         $f4, $f4
+    div.s           $f29, $f4, $f10             # $f29 = $f4 / $f10
 
 
-    # Display "Costo por minuto: $ "
+    # DISPLAY "Costo por minuto: $ "
     li		        $v0, 4		                # $v0 = 4
     la		        $a0, costPmin		        # 
     syscall
 
     li		        $v0, 2		                # $v0 = 2
+    add.s           $f12, $f29, $f30            # $f12 = $f29
     syscall
 
     jr		        $ra					        # jump to $ra
+
+# ********************************************************** #
+# ******************** CALL SIMULATION ********************* #
+# ********************************************************** #
+
+CALL_SIMULATION:
+
+
+
 
 # ********************************************************** #
 # ******************* TERMINAR PROGRAMA ******************** #
@@ -269,4 +308,7 @@ END_PROGRAM:
     li		        $v0, 17		                # $v0 = 17
     li		        $a0, 0		                # $a0 = 0
     syscall
+
+
+
 
