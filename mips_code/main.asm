@@ -32,7 +32,7 @@ mione:          .float          -1.0
 randh:          .float          100.0
 val_coin:       .float          0.05, 0.10, 0.25, 0.50, 1.00
 
-phone:          .space          15
+phone:          .space          25
 
 
 
@@ -253,7 +253,7 @@ GET_NUMBER:
 
     li		        $v0, 8		                # $v0 = 8
     la		        $a0, phone		            # 
-    li		        $a1, 15		                # $a1 = 15  size of the array
+    li		        $a1, 25		                # $a1 = 15  size of the array
     syscall
     
     addi	        $sp, $sp, -4			    # $sp = $sp + -4
