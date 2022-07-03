@@ -19,7 +19,7 @@ fsimCall:       .asciiz         ". Llamada en curso... [ CONTINUAR -> (1) ] o [ 
 durCall:        .asciiz         "\n\nDuracion de la llamada: \t\t"
 minutes:        .asciiz         " minutos."
 costTotal:      .asciiz         "\n\nCosto de la llamada: \t\t\t$ "
-cambio:         .asciiz         "Cambio: $ "
+cambio:         .asciiz         "\n\nCambio: $ "
 enter:          .asciiz         "\n"
 enter2:         .asciiz         "\n\n"
 
@@ -70,7 +70,6 @@ main:
     
 
 
-
     # DISPLAY WELCOME MESSAGE
     li		        $v0, 4		                # $v0 = 4
     la		        $a0, mInicial		        # 
@@ -94,6 +93,7 @@ main:
     mfc1            $s7, $f28
 
     # DISPLAY "Minutos disponibles para hablar: "
+
     li		        $v0, 4		                # $v0 = 4
     la		        $a0, totalMin		        # 
     syscall  
@@ -109,6 +109,7 @@ main:
     jal		        CALL_SIM				    # jump to CALL_SIMULATION and save position to $ra
 
     # DISPLAY "Duracion de la llamada: "
+
     li		        $v0, 4		                # $v0 = 4
     la		        $a0, durCall		        # 
     syscall
@@ -122,6 +123,7 @@ main:
     syscall
     
     # DISPLAY "Costo de la llamada: $ "
+
     li		        $v0, 4		                # $v0 = 4
     la		        $a0, costTotal		        # 
     syscall
@@ -129,13 +131,23 @@ main:
     mov.s 	        $f12, $f27                  # $f12 = $f27
     li		        $v0, 2                      # $v0 = 2
     syscall
+
+    move 	        $a0, $v0		            # $a0 = $v0 minutes of call simulation
     
+    jal		        CHANGE				        # jump to CHANGE and save position to $ra
+
+    # DISPLAY "Cambio: $ "
+
+    li		        $v0, 4		                # $v0 = 4
+    la		        $a0, cambio 		        # 
+    syscall
+
+    li		        $v0, 2                      # $v0 = 2
+    syscall    
 
     j		        END_PROGRAM				    # jump to END_PROGRAM
     
     
-
-
 # ********************************************************** #
 # ************************ GET COINS *********************** #
 # ********************************************************** #
@@ -143,17 +155,23 @@ main:
 GET_MONEY:
 
     # DISPLAY "Ingrese Monedas: "
+
     li		        $v0, 4		                # $v0 = 4
     la		        $a0, fmonInp		        # 
-    syscall   
-    # TAKE FLOAT ENTERED BY THE USER
+    syscall  
+
+    # TAKE FLOAT ENTERED BY THE USER  
+
     li		        $v0, 6                      # $v0 = 6
     syscall 
+
     # IF INPUT == -1 END COIN INPUT
+
     c.eq.s          $f0, $f31                   # if $f0 == $f31 
     bc1t            GET_MONEY_END
 
     # ELSE -> VALIDATE COIN ENTERED
+
     addi	        $sp, $sp, -4			    # $sp = $sp + -4
     sw		        $ra, 0($sp)		            #     
     jal		        VAL_COIN				    # jump to VAL_COIN and save position to $ra
@@ -165,7 +183,9 @@ GET_MONEY:
     j               GET_MONEY                   # jump to GET_MONEY
 
 GET_MONEY_INV:
+
     # DISPLAY "*-- MONEDA INCORRECTA --*"
+
     li		        $v0, 4		                # $v0 = 4
     la		        $a0, fmonErr		        # 
     syscall
@@ -174,6 +194,7 @@ GET_MONEY_INV:
 GET_MONEY_END:
 
     # DISPLAY "Total: $ "
+
     li		        $v0, 4                      # $v0 = 4
     la		        $a0, monTotal               # 
     syscall   
@@ -208,18 +229,20 @@ VAL_COIN_V:
     li		        $v1, 1		                # $v1 = 1 valid coin
     jr		        $ra					        # jump to $ra   
 
-
 # ********************************************************** #
 # ******************* GET PHONE NUMBER ********************* #
 # ********************************************************** #
 
 GET_NUMBER:
+
     # DISPLAY "Ingrese el numero a llamar: "
+
     li		        $v0, 4		                # $v0 = 4
     la		        $a0, fnumInp		        # 
     syscall
 
     # TAKE STRING ENTERED BY THE USER (PHONE NUMBER)
+
     li		        $v0, 8		                # $v0 = 8
     la		        $a0, phone		            # 
     li		        $a1, 15		                # $a1 = 15  size of the array
@@ -235,13 +258,14 @@ GET_NUMBER:
     jr		        $ra					        # jump to $ra    
     
 GET_NUMBER_I:  
+
     # DISPLAY  "*-- NUMERO INCORRECTO --*"
+
     li		        $v0, 4		                # $v0 = 4
     la		        $a0, fnumErr		        # 
     syscall
     j		        GET_NUMBER				    # jump to GET_NUMBER
     
- 
 # ********************************************************** #
 # ******************** VALIDATE PHONE ********************** #
 # ********************************************************** #
@@ -257,6 +281,7 @@ VAL_PHONE_LOOP:
     bgt		        $t0, $s4, VAL_PHONE_I       # if $t0 > $s4 then VAL_NUM_I   if index > 9
 
     # CHECK IF THE CURRENT CHARACTER IS A NUMBER
+
     lb              $a0, 0($t2)                 #
 
     addi	        $sp, $sp, -4			    # $sp = $sp + -4
@@ -266,9 +291,11 @@ VAL_PHONE_LOOP:
     addi	        $sp, $sp, 4			        # $sp = $sp + 4
 
     # IF IT'S NOT A NUMBER --> VAL_PHONE_I (INVALID NUMBER)
+
     beq		        $v1, $s0, VAL_PHONE_I	    # if $v0 == $s0 then VAL_PHONE_I
 
     # ELSE IF IT'S THE 9TH CHARACTER --> CHECK IF THE NEXT ONE IS '\n'
+
     bne		        $t0, $s4, VAL_PHONE_LOOP	# if $t0 != $s4 then VAL_PHONE_LOOP
     lb              $t3, 1($t2)                 #
     bne		        $t3, $s6, VAL_PHONE_I	    # if $a0 != $s6 then VAL_PHONE_I
@@ -303,7 +330,9 @@ VAL_NUMBER_I:
 # ********************************************************** #
 
 COST:
+
     # GENERATE RANDOM NUMBER BETWEEN 10 AND 40
+
     li		        $a1, 31		                # $a1 = 31   
     li		        $v0, 42		                # $v0 = 42
     syscall
@@ -311,12 +340,14 @@ COST:
     addi	        $t5, $a0, 10			    # $t5 = $a0 + 10
 
     # CONVERT THE NUMBER TO FLOATING POINT BETWEEN 0.10 AND 0.40
+
     mtc1            $t5, $f4
     cvt.s.w         $f4, $f4
     div.s           $f29, $f4, $f10             # $f29 = $f4 / $f10
 
 
     # DISPLAY "Costo por minuto: $ "
+
     li		        $v0, 4		                # $v0 = 4
     la		        $a0, costPmin		        # 
     syscall
@@ -334,11 +365,13 @@ COST:
 CALL_SIM:
 
     # DISPLAY "Iniciar Llamada?    [ SI -> (1) ]    [ NO -> (0) ] : "
+
     li		        $v0, 4		                # $v0 = 4
     la		        $a0, fsimInit		        # 
     syscall
 
     # SEE IF THE USER WANTS TO START THE CALL
+
     li		        $v0, 5		                # $v0 = 5
     syscall
     beq		        $v0, $s0, CALL_SIM_END	    # if $v0 == $s0 then CALL_SIM_END
@@ -350,6 +383,7 @@ CALL_SIM_LOOP:
     addi	        $t0, $t0, 1			        # $t0 = $t0 + 1
 
     # DISPLAY "[minute] Llamada en curso... [ CONTINUAR -> (1) ] o [ TERMINAR -> (0) ]: "
+
     li		        $v0, 1		                # $v0 = 1
     move 	        $a0, $t0		            # $a0 = $t1
     syscall    
@@ -359,7 +393,9 @@ CALL_SIM_LOOP:
     syscall
 
     beq		        $t0, $s7, CALL_SIM_END	    # if $t0 == $s7 then CALL_SIM_END
+
     # SEE IF THE USER WANTS TO CONTINUE THE CALL
+
     li		        $v0, 5		                # $v0 = 5
     syscall
     beq		        $v0, $s0, CALL_SIM_END	    # if $v0 == $s0 then CALL_SIM_END
@@ -372,14 +408,26 @@ CALL_SIM_END:
     jr		        $ra					        # jump to $ra
 
 # ********************************************************** #
+# ************************* CHANGE ************************* #
+# ********************************************************** #
+
+CHANGE:
+
+    sub.s           $f12, $f2, $f27             # $f12 = DEPOSITED MONEY - CALL COST
+    lwc1            $f26, 0($s3)                # MINIMUM COIN VALUE 0.05
+    
+    div.s           $f12, $f12, $f26            # $f12 = $f12 / 0.05
+    floor.w.s       $f12, $f12                  # (int) $f12
+    cvt.s.w         $f12, $f12
+    mul.s           $f12, $f12, $f26            # $f12 = $f12 * 0.05 
+
+    jr		        $ra					        # jump to $ra
+    
+# ********************************************************** #
 # ******************* TERMINAR PROGRAMA ******************** #
 # ********************************************************** #
 
 END_PROGRAM: 
     li		        $v0, 17		                # $v0 = 17
     li		        $a0, 0		                # $a0 = 0
-    syscall
-
-
-
-
+    syscall    
