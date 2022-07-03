@@ -1,7 +1,7 @@
                 .data
 
 mInicial:       .asciiz         "*******************************************\n**** BIENVENIDO A LA CABINA TELEFONICA ****\n*******************************************\n"   
-msSalir:        .asciiz         "\nIngrese [ -1 ] para dejar de añadir monedas\n\n"
+msSalir:        .asciiz         "\nOpcion [ -1 ] para ya no insertar monedas\n\n"
 
 fmonInp:        .asciiz         "Ingrese Monedas: "
 fmonErr:        .asciiz         "*-- MONEDA INCORRECTA --*\n"
@@ -17,11 +17,15 @@ fsimInit:       .asciiz         "Iniciar Llamada?    [ SI -> (1) ]    [ NO -> (0
 fsimCall:       .asciiz         ". Llamada en curso... [ CONTINUAR -> (1) ] o [ TERMINAR -> (0) ]: \t"
 
 durCall:        .asciiz         "\n\nDuracion de la llamada: \t\t"
-minutes:        .asciiz         " minutos."
 costTotal:      .asciiz         "\n\nCosto de la llamada: \t\t\t$ "
 cambio:         .asciiz         "\n\nCambio: $ "
 enter:          .asciiz         "\n"
 enter2:         .asciiz         "\n\n"
+timeH:          .asciiz         "00h:"
+timeS:          .asciiz         "m:00s"
+endMoney:       .asciiz         "\n** SU SALDO ES INSUFICIENTE PARA CONTINUAR CON LA LLAMADA **"
+endCall:        .asciiz         "\n**LA LLAMADA HA FINALIZADO**"
+noCall:         .asciiz         "\n**LLAMADA NO INICIADA**"
 
 zerof:          .float          0.0
 mione:          .float          -1.0
@@ -114,14 +118,18 @@ main:
     la		        $a0, durCall		        # 
     syscall
 
+    li		        $v0, 4		                # $v0 = 4
+    la		        $a0, timeH		            # 
+    syscall
+
     li		        $v0, 1		                # $v0 = 1
     move 	        $a0, $v1		            # $a0 = $v1
     syscall
 
     li		        $v0, 4		                # $v0 = 4
-    la		        $a0, minutes		        # 
+    la		        $a0, timeS		            # 
     syscall
-    
+
     # DISPLAY "Costo de la llamada: $ "
 
     li		        $v0, 4		                # $v0 = 4
@@ -372,11 +380,11 @@ CALL_SIM:
 
     # SEE IF THE USER WANTS TO START THE CALL
 
+    li              $t0, 0		                # $t0 = 0 counter
     li		        $v0, 5		                # $v0 = 5
     syscall
     beq		        $v0, $s0, CALL_SIM_END	    # if $v0 == $s0 then CALL_SIM_END
     
-    li              $t0, 0		                # $t0 = 0 counter
 
 CALL_SIM_LOOP:
     add.s           $f27, $f27, $f29            # $f27 += COST PER MINUTE
@@ -391,19 +399,40 @@ CALL_SIM_LOOP:
     li		        $v0, 4		                # $v0 = 4
     la		        $a0, fsimCall		        # 
     syscall
+    # IF THE TIME IS EQUAL TO THE MAXIMUM ALLOWED GOES TO CALL_SIM_END
 
-    beq		        $t0, $s7, CALL_SIM_END	    # if $t0 == $s7 then CALL_SIM_END
+    beq		        $t0, $s7, CALL_SIM_END1	    # if $t0 == $s7 then CALL_SIM_END
 
     # SEE IF THE USER WANTS TO CONTINUE THE CALL
 
     li		        $v0, 5		                # $v0 = 5
     syscall
-    beq		        $v0, $s0, CALL_SIM_END	    # if $v0 == $s0 then CALL_SIM_END
+    beq		        $v0, $s0, CALL_SIM_END2	    # if $v0 == $s0 then CALL_SIM_END
         
 
     j		        CALL_SIM_LOOP				# jump to CALL_SIM_LOOP
-    
+
 CALL_SIM_END:
+    li		        $v0, 4		                # $v0 = 4
+    la		        $a0, noCall		            # 
+    syscall 
+
+    move 	        $v1, $t0		            # $v1 = $t0
+    jr		        $ra					        # jump to $ra 
+    
+CALL_SIM_END1:
+    li		        $v0, 4		                # $v0 = 4
+    la		        $a0, endMoney		        # 
+    syscall    
+
+    move 	        $v1, $t0		            # $v1 = $t0
+    jr		        $ra					        # jump to $ra
+
+CALL_SIM_END2:
+    li		        $v0, 4		                # $v0 = 4
+    la		        $a0, endCall		        # 
+    syscall    
+
     move 	        $v1, $t0		            # $v1 = $t0
     jr		        $ra					        # jump to $ra
 
